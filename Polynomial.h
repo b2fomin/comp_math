@@ -9,39 +9,63 @@ private:
 	std::vector<T> coeff;
 public:
 	Polynomial() = default;
-	Polynomial(int degree);
+	Polynomial(std::size_t degree);
 	Polynomial(std::vector<T>& coeff);
 	template<typename... Args>
 	Polynomial(Args... args);
+	template<typename U>
+	Polynomial(const Polynomial<U>&);
+	template<typename U>
+	Polynomial<T>& operator=(const Polynomial<U>&);
 	~Polynomial() = default;
 
 public:
-	int degree() const;
+	std::size_t degree() const;
+	const std::vector<T>& coeff_() const;
 	template<typename U, typename F>
-	friend Polynomial operator+(const Polynomial<U>& left, const Polynomial<F>& right);
+	friend Polynomial<decltype(U{} + F{}) > operator+(const Polynomial<U>& left, const Polynomial<F>& right);
 	template<typename U, typename F>
-	friend Polynomial operator*(const Polynomial<U>& left, const Polynomial<F>& right);
+	friend Polynomial<decltype(U{} * F{}) > operator*(const Polynomial<U>& left, const Polynomial<F>& right);
 	template<typename U, typename F>
-	friend Polynomial operator/(const Polynomial<U>& left, const Polynomial<F>& right);
+	friend Polynomial<decltype(U{} / F{}) > operator/(const Polynomial<U>& left, const Polynomial<F>& right);
 };
 
 template<typename T>
 Polynomial<T>::Polynomial(std::vector<T>& coeff) : coeff{ coeff } {};
 
 template<typename T>
-Polynomial<T>::Polynomial(int degree) :coeff{ std::vector<T>(n) } {};
+Polynomial<T>::Polynomial(std::size_t degree) :coeff{ std::vector<T>(degree) } {};
 
 template<typename T>
 template<typename... Args>
-Polynomial<T>::Polynomial(Args... args) : coeff{ ...args } {};
+Polynomial<T>::Polynomial(Args... args) : coeff{ static_cast<T>(args)... } {};
 
 template<typename T>
-int Polynomial<T>::degree() const { return coeff.size(); };
+template<typename U>
+Polynomial<T>::Polynomial(const Polynomial<U>& other) :coeff{std::vector<T>(other.coeff.size())}
+{
+	for (int i = 0; i < coeff.size(); ++i) coeff[i] = static_cast<T>(other.coeff[i]);
+}
+
+template<typename T>
+template<typename U>
+Polynomial<T>& Polynomial<T>::operator=(const Polynomial<U>& other)
+{
+	coeff = std::vector<T>(other.coeff_().size());
+	for (int i = 0; i < coeff.size(); ++i) coeff[i] = static_cast<T>(other.coeff_()[i]);
+	return *this;
+}
+
+template<typename T>
+std::size_t Polynomial<T>::degree() const { return coeff.size(); };
+
+template<typename T>
+const std::vector<T>& Polynomial<T>::coeff_() const { return coeff; };
 
 template<typename T, typename U>
 Polynomial<decltype(T{} + U{}) > operator+(const Polynomial<T>& left, const Polynomial<U>& right)
 {
-	const Polynomial<decltype(T{} + U{}) > & pol_max, pol_min;
+	Polynomial<decltype(T{} + U{}) > pol_max, pol_min;
 	if (left.degree() >= right.degree())
 	{
 		pol_max = left;
@@ -71,7 +95,7 @@ Polynomial<decltype(T{} + U{}) > operator+(const Polynomial<T>& left, const Poly
 template<typename T, typename U>
 Polynomial<decltype(T{} *U{}) > operator*(const Polynomial<T>& left, const Polynomial<U>& right)
 {
-	const Polynomial<decltype(T{} *U{}) > & pol_max, pol_min;
+	Polynomial<decltype(T{} *U{}) > pol_max, pol_min;
 	if (left.degree() >= right.degree())
 	{
 		pol_max = left;
@@ -89,9 +113,11 @@ Polynomial<decltype(T{} *U{}) > operator*(const Polynomial<T>& left, const Polyn
 		{
 			if (i - j >= pol_max.degree()) continue;
 			if (j >= pol_min.degree()) break;
-			new_pol.coeff[i] += pol_max.coeff[i - j] * pol_min[j];
+			new_pol.coeff[i] += pol_max.coeff[i - j] * pol_min.coeff[j];
 		}
 	}
+
+	return new_pol;
 }
 
 
