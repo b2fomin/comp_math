@@ -11,6 +11,7 @@ public:
 	Polynomial() = default;
 	Polynomial(std::size_t degree);
 	Polynomial(std::vector<T>& coeff);
+	Polynomial(std::initializer_list<T>);
 	template<typename... Args>
 	Polynomial(Args... args);
 	template<typename U>
@@ -26,26 +27,33 @@ public:
 	template<typename U, typename F>
 	friend Polynomial<decltype(U{} + F{}) > operator+(const Polynomial<U>& left, const Polynomial<F>& right);
 	template<typename U, typename F>
-	friend Polynomial<decltype(U{} * F{}) > operator*(const Polynomial<U>& left, const Polynomial<F>& right);
+	friend Polynomial<decltype(U{} - F{}) > operator-(const Polynomial<U>& left, const Polynomial<F>& right);
+	template<typename U, typename F>
+	friend Polynomial<decltype(U{} *F{}) > operator*(const Polynomial<U>& left, const Polynomial<F>& right);
 	template<typename U, typename F>
 	friend Polynomial<decltype(U{} / F{}) > operator/(Polynomial<U> left, Polynomial<F> right);
 	template<typename U, typename F>
-	friend Polynomial<decltype(U{} % F{}) > operator%(const Polynomial<U>& left, const Polynomial<F>& right);
+	friend Polynomial<decltype(U{}% F{}) > operator%(const Polynomial<U>& left, const Polynomial<F>& right);
+	template<typename U, typename F>
+	friend bool operator==(const Polynomial<U>& left, const Polynomial<F>& right);
 };
 
 template<typename T>
 Polynomial<T>::Polynomial(std::vector<T>& coeff) : coeff{ coeff } { true_degree(); };
 
 template<typename T>
-Polynomial<T>::Polynomial(std::size_t degree) :coeff{ std::vector<T>(degree+1) } {};
+Polynomial<T>::Polynomial(std::size_t degree) :coeff{ std::vector<T>(degree + 1) } {};
 
 template<typename T>
 template<typename... Args>
 Polynomial<T>::Polynomial(Args... args) : coeff{ static_cast<T>(args)... } { true_degree(); };
 
 template<typename T>
+Polynomial<T>::Polynomial(std::initializer_list<T> list) : coeff{ list } { true_degree(); };
+
+template<typename T>
 template<typename U>
-Polynomial<T>::Polynomial(const Polynomial<U>& other) :coeff{std::vector<T>(other.coeff.size())}
+Polynomial<T>::Polynomial(const Polynomial<U>& other) :coeff{ std::vector<T>(other.coeff.size()) }
 {
 	for (int i = 0; i < coeff.size(); ++i) coeff[i] = static_cast<T>(other.coeff[i]);
 }
@@ -64,7 +72,7 @@ void Polynomial<T>::true_degree()
 {
 	while (coeff.size() - 1 && !coeff[coeff.size() - 1])
 	{
-		coeff.erase(coeff.end()-1);
+		coeff.erase(coeff.end() - 1);
 	}
 }
 
@@ -106,6 +114,36 @@ Polynomial<decltype(T{} + U{}) > operator+(const Polynomial<T>& left, const Poly
 }
 
 template<typename T, typename U>
+Polynomial<decltype(T{} - U{}) > operator-(const Polynomial<T>& left, const Polynomial<U>& right)
+{
+	Polynomial<decltype(T{} - U{}) > pol_max, pol_min;
+	if (left.degree() >= right.degree())
+	{
+		pol_max = left;
+		pol_min = right;
+	}
+	else
+	{
+		pol_max = right;
+		pol_min = left;
+	}
+
+	auto new_pol = Polynomial<decltype(T{} - U{}) > (pol_max.degree());
+	int i = 0;
+	for (i; i <= pol_min.degree(); ++i)
+	{
+		new_pol.coeff[i] = left.coeff[i] - right.coeff[i];
+	}
+
+	for (i; i <= pol_max.degree(); ++i)
+	{
+		new_pol.coeff[i] = pol_max == left ? pol_max.coeff[i] : -pol_max.coeff[i];
+	}
+
+	new_pol.true_degree();
+	return new_pol;
+}
+template<typename T, typename U>
 Polynomial<decltype(T{} *U{}) > operator*(const Polynomial<T>& left, const Polynomial<U>& right)
 {
 	Polynomial<decltype(T{} *U{}) > pol_max, pol_min;
@@ -146,7 +184,7 @@ Polynomial<decltype(T{} / U{}) > operator/(Polynomial<T> left, Polynomial<U> rig
 		if (!left.coeff[left.degree() - i]) continue;
 		auto coeff = left.coeff[left.degree() - i] / right.coeff[right.degree()];
 		new_pol.coeff[new_pol.degree() - i] = coeff;
-		for (int j = 0; j < right.degree(); ++j)
+		for (int j = 0; j <= right.degree(); ++j)
 		{
 			left.coeff[left.degree() - right.degree() - i + j] -= right.coeff[j] * coeff;
 		}
@@ -159,4 +197,17 @@ template<typename U, typename F>
 Polynomial<decltype(U{}% F{}) > operator%(const Polynomial<U>& left, const Polynomial<F>& right)
 {
 	return left - left / right;
+}
+
+
+template<typename U, typename F>
+bool operator==(const Polynomial<U>& left, const Polynomial<F>& right)
+{
+	if (left.degree() != right.degree()) return false;
+	for (int i = 0; i < left.degree(); ++i)
+	{
+		if (left.coeff[i] != right.coeff[i]) return false;
+	}
+
+	return true;
 }
