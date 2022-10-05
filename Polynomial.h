@@ -24,6 +24,9 @@ private:
 public:
 	std::size_t degree() const;
 	const std::vector<T>& coeff_() const;
+	template<typename U>
+	decltype(T{}*U{}) operator()(U& value);
+
 	template<typename U, typename F>
 	friend Polynomial<decltype(U{} + F{}) > operator+(const Polynomial<U>& left, const Polynomial<F>& right);
 	template<typename U, typename F>
@@ -210,4 +213,14 @@ bool operator==(const Polynomial<U>& left, const Polynomial<F>& right)
 	}
 
 	return true;
+}
+
+template<typename T>
+template<typename U>
+decltype(T{}*U{}) Polynomial<T>::operator()(U& value)
+{
+	decltype(T{}*U{}) result;
+	for (int = 0; i < coeff.size(); ++i) result += coeff[i] * pow(value, i);
+
+	return result;
 }
