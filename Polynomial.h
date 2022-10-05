@@ -21,6 +21,8 @@ public:
 	friend Polynomial operator+(const Polynomial<U>& left, const Polynomial<F>& right);
 	template<typename U, typename F>
 	friend Polynomial operator*(const Polynomial<U>& left, const Polynomial<F>& right);
+	template<typename U, typename F>
+	friend Polynomial operator/(const Polynomial<U>& left, const Polynomial<F>& right);
 };
 
 template<typename T>
@@ -69,7 +71,7 @@ Polynomial<decltype(T{} + U{}) > operator+(const Polynomial<T>& left, const Poly
 template<typename T, typename U>
 Polynomial<decltype(T{} *U{}) > operator*(const Polynomial<T>& left, const Polynomial<U>& right)
 {
-	const Polynomial<decltype(T{} * U{}) > & pol_max, pol_min;
+	const Polynomial<decltype(T{} *U{}) > & pol_max, pol_min;
 	if (left.degree() >= right.degree())
 	{
 		pol_max = left;
@@ -80,14 +82,36 @@ Polynomial<decltype(T{} *U{}) > operator*(const Polynomial<T>& left, const Polyn
 		pol_max = right;
 		pol_min = left;
 	}
-	auto new_pol = Polynomial<decltype(T{} * U{}) > (pol_max.degree() + pol_min.degree());
+	auto new_pol = Polynomial<decltype(T{} *U{}) > (pol_max.degree() + pol_min.degree());
 	for (int i = 0; i < new_pol.degree(); ++i)
 	{
 		for (int j = 0; j < i; ++j)
 		{
 			if (i - j >= pol_max.degree()) continue;
 			if (j >= pol_min.degree()) break;
-			new_pol.coeff[i] += pol_max.coeff[i - j] + pol_min[j];
+			new_pol.coeff[i] += pol_max.coeff[i - j] * pol_min[j];
 		}
 	}
+}
+
+
+template<typename T, typename U>
+Polynomial<decltype(T{} / U{}) > operator/(const Polynomial<T>& left, const Polynomial<U>& right)
+{
+	if (left.degree() < right.degree()) return Polynomial<decltype(T{} / U{}) > ({ 0 });
+	auto new_pol = Polynomial<decltype(T{} / U{}) > (left.degree() - right.degree());
+
+	for (int i = 0; i < new_pol.degree(); ++i)
+	{
+		if (left.degree() - i < right.degree()) break;
+		if (!left.coeff[left.degree() - i - 1]) continue;
+		auto coeff = left.coeff[left.degree() - i - 1] / right.coeff[right.degree() - 1];
+		new_pol.coeff[new_pol.degree() - i - 1] = coeff;
+		for (int j = 0; j < right.degree(); ++j)
+		{
+			left.coeff[left.degree() - right.degree() - i + j] -= right.coeff[j] * coeff;
+		}
+	}
+
+	return new_pol;
 }
