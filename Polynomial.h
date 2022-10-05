@@ -27,7 +27,7 @@ public:
 	template<typename U, typename F>
 	friend Polynomial<decltype(U{} * F{}) > operator*(const Polynomial<U>& left, const Polynomial<F>& right);
 	template<typename U, typename F>
-	friend Polynomial<decltype(U{} / F{}) > operator/(const Polynomial<U>& left, const Polynomial<F>& right);
+	friend Polynomial<decltype(U{} / F{}) > operator/(Polynomial<U> left, Polynomial<F> right);
 };
 
 template<typename T>
@@ -122,17 +122,17 @@ Polynomial<decltype(T{} *U{}) > operator*(const Polynomial<T>& left, const Polyn
 
 
 template<typename T, typename U>
-Polynomial<decltype(T{} / U{}) > operator/(const Polynomial<T>& left, const Polynomial<U>& right)
+Polynomial<decltype(T{} / U{}) > operator/(Polynomial<T> left, Polynomial<U> right)
 {
 	if (left.degree() < right.degree()) return Polynomial<decltype(T{} / U{}) > ({ 0 });
 	auto new_pol = Polynomial<decltype(T{} / U{}) > (left.degree() - right.degree());
 
-	for (int i = 0; i < new_pol.degree(); ++i)
+	for (int i = 0; i <= new_pol.degree(); ++i)
 	{
 		if (left.degree() - i < right.degree()) break;
-		if (!left.coeff[left.degree() - i - 1]) continue;
-		auto coeff = left.coeff[left.degree() - i - 1] / right.coeff[right.degree() - 1];
-		new_pol.coeff[new_pol.degree() - i - 1] = coeff;
+		if (!left.coeff[left.degree() - i]) continue;
+		auto coeff = left.coeff[left.degree() - i] / right.coeff[right.degree()];
+		new_pol.coeff[new_pol.degree() - i] = coeff;
 		for (int j = 0; j < right.degree(); ++j)
 		{
 			left.coeff[left.degree() - right.degree() - i + j] -= right.coeff[j] * coeff;
