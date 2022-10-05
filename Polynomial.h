@@ -26,6 +26,7 @@ public:
 	const std::vector<T>& coeff_() const;
 	template<typename U>
 	decltype(T{}*U{}) operator()(U& value);
+	Polynomial derivative() const;
 
 	template<typename U, typename F>
 	friend Polynomial<decltype(U{} + F{}) > operator+(const Polynomial<U>& left, const Polynomial<F>& right);
@@ -220,7 +221,21 @@ template<typename U>
 decltype(T{}*U{}) Polynomial<T>::operator()(U& value)
 {
 	decltype(T{}*U{}) result;
-	for (int = 0; i < coeff.size(); ++i) result += coeff[i] * pow(value, i);
+	for (int i = 0; i < coeff.size(); ++i) result += coeff[i] * pow(value, i);
 
 	return result;
+}
+
+template<typename T>
+Polynomial<T> Polynomial<T>::derivative() const
+{
+	if (!this->degree()) return Polynomial<T>({0});
+	auto new_pol = Polynomial<T>(this->degree() - 1);
+
+	for (int i = 0; i <= new_pol.degree(); ++i)
+	{
+		new_pol.coeff[i] = coeff[i + 1] * (i + 1);
+	}
+
+	return new_pol;
 }
