@@ -34,7 +34,7 @@ template<typename T>
 Polynomial<T>::Polynomial(std::vector<T>& coeff) : coeff{ coeff } {};
 
 template<typename T>
-Polynomial<T>::Polynomial(std::size_t degree) :coeff{ std::vector<T>(degree) } {};
+Polynomial<T>::Polynomial(std::size_t degree) :coeff{ std::vector<T>(degree+1) } {};
 
 template<typename T>
 template<typename... Args>
@@ -57,7 +57,7 @@ Polynomial<T>& Polynomial<T>::operator=(const Polynomial<U>& other)
 }
 
 template<typename T>
-std::size_t Polynomial<T>::degree() const { return coeff.size(); };
+std::size_t Polynomial<T>::degree() const { return coeff.size() - 1; };
 
 template<typename T>
 const std::vector<T>& Polynomial<T>::coeff_() const { return coeff; };
@@ -79,12 +79,12 @@ Polynomial<decltype(T{} + U{}) > operator+(const Polynomial<T>& left, const Poly
 
 	auto new_pol = Polynomial<decltype(T{} + U{}) > (pol_max.degree());
 	int i = 0;
-	for (i; i < pol_min.degree(); ++i)
+	for (i; i <= pol_min.degree(); ++i)
 	{
 		new_pol.coeff[i] = pol_max.coeff[i] + pol_min.coeff[i];
 	}
 
-	for (i; i < pol_max.degree(); ++i)
+	for (i; i <= pol_max.degree(); ++i)
 	{
 		new_pol.coeff[i] = pol_max.coeff[i];
 	}
@@ -107,12 +107,12 @@ Polynomial<decltype(T{} *U{}) > operator*(const Polynomial<T>& left, const Polyn
 		pol_min = left;
 	}
 	auto new_pol = Polynomial<decltype(T{} *U{}) > (pol_max.degree() + pol_min.degree());
-	for (int i = 0; i < new_pol.degree(); ++i)
+	for (int i = 0; i <= new_pol.degree(); ++i)
 	{
-		for (int j = 0; j < i; ++j)
+		for (int j = 0; j <= i; ++j)
 		{
-			if (i - j >= pol_max.degree()) continue;
-			if (j >= pol_min.degree()) break;
+			if (i - j >= pol_max.degree() + 1) continue;
+			if (j >= pol_min.degree() + 1) break;
 			new_pol.coeff[i] += pol_max.coeff[i - j] * pol_min.coeff[j];
 		}
 	}
