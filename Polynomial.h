@@ -202,7 +202,7 @@ Polynomial<decltype(T{} / U{}) > operator/(Polynomial<T> left, Polynomial<U> rig
 template<typename U, typename F>
 Polynomial<decltype(U{} - U{} / F{}) > operator%(const Polynomial<U>& left, const Polynomial<F>& right)
 {
-	return left - left / right;
+	return left - left / right * right;
 }
 
 
@@ -237,7 +237,7 @@ decltype(T{}*U{}) Polynomial<T>::operator()(U& value) const
 template<typename T>
 Polynomial<T> Polynomial<T>::derivative() const
 {
-	if (!this->degree()) return Polynomial<T>({0});
+	if (!this->degree()) return Polynomial<T>({ 0 });
 	auto new_pol = Polynomial<T>(this->degree() - 1);
 
 	for (int i = 0; i <= new_pol.degree(); ++i)
