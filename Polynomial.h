@@ -18,7 +18,8 @@ public:
 	template<typename U>
 	Polynomial<T>& operator=(const Polynomial<U>&);
 	~Polynomial() = default;
-
+private:
+	void true_degree();
 public:
 	std::size_t degree() const;
 	const std::vector<T>& coeff_() const;
@@ -28,17 +29,19 @@ public:
 	friend Polynomial<decltype(U{} * F{}) > operator*(const Polynomial<U>& left, const Polynomial<F>& right);
 	template<typename U, typename F>
 	friend Polynomial<decltype(U{} / F{}) > operator/(Polynomial<U> left, Polynomial<F> right);
+	template<typename U, typename F>
+	friend Polynomial<decltype(U{} % F{}) > operator%(const Polynomial<U>& left, const Polynomial<F>& right);
 };
 
 template<typename T>
-Polynomial<T>::Polynomial(std::vector<T>& coeff) : coeff{ coeff } {};
+Polynomial<T>::Polynomial(std::vector<T>& coeff) : coeff{ coeff } { true_degree(); };
 
 template<typename T>
 Polynomial<T>::Polynomial(std::size_t degree) :coeff{ std::vector<T>(degree+1) } {};
 
 template<typename T>
 template<typename... Args>
-Polynomial<T>::Polynomial(Args... args) : coeff{ static_cast<T>(args)... } {};
+Polynomial<T>::Polynomial(Args... args) : coeff{ static_cast<T>(args)... } { true_degree(); };
 
 template<typename T>
 template<typename U>
@@ -54,6 +57,15 @@ Polynomial<T>& Polynomial<T>::operator=(const Polynomial<U>& other)
 	coeff = std::vector<T>(other.coeff_().size());
 	for (int i = 0; i < coeff.size(); ++i) coeff[i] = static_cast<T>(other.coeff_()[i]);
 	return *this;
+}
+
+template<typename T>
+void Polynomial<T>::true_degree()
+{
+	while (coeff.size() - 1 && !coeff[coeff.size() - 1])
+	{
+		coeff.erase(coeff.end()-1);
+	}
 }
 
 template<typename T>
@@ -89,6 +101,7 @@ Polynomial<decltype(T{} + U{}) > operator+(const Polynomial<T>& left, const Poly
 		new_pol.coeff[i] = pol_max.coeff[i];
 	}
 
+	new_pol.true_degree();
 	return new_pol;
 }
 
@@ -140,4 +153,10 @@ Polynomial<decltype(T{} / U{}) > operator/(Polynomial<T> left, Polynomial<U> rig
 	}
 
 	return new_pol;
+}
+
+template<typename U, typename F>
+Polynomial<decltype(U{}% F{}) > operator%(const Polynomial<U>& left, const Polynomial<F>& right)
+{
+	return left - left / right;
 }
