@@ -4,6 +4,7 @@
 #include<vector>
 #include<numeric>
 #include<utility>
+#include<limits>
 
 template<typename T>
 std::size_t sturm_root_number(Polynomial<T>& pol, double a, double b)
@@ -85,3 +86,40 @@ std::vector<std::pair<double, double>> rough_sol(Polynomial<T>& pol, double left
 	return intervals;
 }
 
+template<typename T>
+double newton_method(Polynomial<T>& pol, double left_rough, double right_rough, double error=pow(10,-6))
+{
+	auto der1 = pol.derivative();
+	auto der2 = der1.derivative();
+
+	auto der1_roots = rough_sol(der1, left_rough, right_rough);
+	auto der2_roots = rough_sol(der2, left_rough, right_rough);
+
+	auto left = left_rough;
+	double right;
+	bool permission = false;
+	for (int i = 0; i < std::min(der1_roots.size(), der2_roots.size()); ++i)
+	{
+		right = std::min(der1_roots[i].first, der2_roots[i].first);
+		if (pol(left)*pol(right) <= 0) { permission = true; break; }
+		left = std::max(der1_roots[i].second, der2_roots[i].second);
+	}
+
+	if (!permission)
+	{
+		right = right_rough;
+		if (pol(left)*pol(right) <= 0) { permission = true; }
+		else throw std::exception("Can't use Newton's method");
+	}
+
+	double result, delta = std::numeric_limits<double>::max();
+	if (der2(left) > 0) result = right;
+	else result = left;
+
+	do
+	{	delta = pol(result) / der1(result);
+		result -= delta;
+	} while (std::abs(delta) > error);
+
+	return result;
+}
