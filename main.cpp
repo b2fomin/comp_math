@@ -33,7 +33,25 @@ Polynomial<double> init()
 	return Polynomial<double>{ coeff };
 }
 
+double calculate_d0(double z)
+{
+	int n = 2 * GAMMA_3 / (GAMMA_3 - 1);
+	auto p_1 = pow(z, n) * P_3;
+
+	auto rho_1 = RHO_0 / ((GAMMA_0 + 1) * P_0 + (GAMMA_0 - 1) * p_1) *
+						 ((GAMMA_0 - 1) * P_0 + (GAMMA_0 + 1) * p_1);
+	auto u_1 = U_0 + std::sqrt((rho_1 + RHO_0)*(p_1 - P_0) / rho_1 / RHO_0);
+	return std::abs(U_0 + (p_1 - P_0) / RHO_0 / (u_1 - U_0));
+}
+
 int main()
 {;
 	auto pol= init();
+
+	for (auto& elem : rough_sol(pol))
+	{
+		auto z_root=newton_method(pol, elem.first, elem.second);
+		std::cout << calculate_d0(z_root) << std::endl;
+	}
+
 }
