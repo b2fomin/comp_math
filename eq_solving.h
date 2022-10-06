@@ -108,6 +108,21 @@ double newton_method(Polynomial<T>& pol, double left_rough, double right_rough, 
 		roots_min = std::move(der1_roots);
 	}
 
+	for (int i = 0; i < 2; ++i)
+	{
+		auto& arr = i ? roots_max : roots_min;
+		for (int j = 0; j < arr.size(); ++j)
+		{
+			auto& elem = arr[j];
+			while (pol(elem.first) * pol(elem.second) <= 0)
+			{
+				auto middle = (elem.first + elem.second) / 2;
+				if (der1(elem.first) * der1(middle) <= 0) elem.second = middle;
+				else elem.first = middle;
+			}
+		}
+	}
+
 	auto left = left_rough;
 	double right;
 	bool permission = false;
@@ -145,11 +160,11 @@ double newton_method(Polynomial<T>& pol, double left_rough, double right_rough, 
 	{
 		right = right_rough;
 		if (pol(left) * pol(right) <= 0) { permission = true; }
-		//else throw std::exception("Can't use Newton's method");
+		else throw std::exception("Can't use Newton's method");
 	}
 
 	double result, delta = std::numeric_limits<double>::max();
-	if (der2(left) > 0) result = right;
+	if (pol(left)*der2(left) <= 0) result = right;
 	else result = left;
 
 	do
