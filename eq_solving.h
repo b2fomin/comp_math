@@ -39,12 +39,19 @@ std::size_t sturm_root_number(Polynomial<T>& pol, double a, double b)
 template<typename T>
 std::vector<std::pair<double, double>> rough_sol(Polynomial<T>& pol)
 {
+
 	auto coeff = pol.coeff_();
 	for (auto& elem : coeff) elem = std::abs(elem);
 
 	auto left_total = coeff[0] / (coeff[0] + *std::max_element(coeff.begin() + 1, coeff.end()));
 	auto right_total = 1 + *std::max_element(coeff.begin(), coeff.end() - 1) / coeff[coeff.size() - 1];
+	
+	return rough_sol(pol, left_total, right_total);
+}
 
+template<typename T>
+std::vector<std::pair<double, double>> rough_sol(Polynomial<T>& pol, double left_total, double right_total)
+{
 	auto total = sturm_root_number(pol, left_total, right_total);
 	std::vector<std::pair<double, double>> intervals{ total };
 
@@ -77,3 +84,4 @@ std::vector<std::pair<double, double>> rough_sol(Polynomial<T>& pol)
 
 	return intervals;
 }
+
