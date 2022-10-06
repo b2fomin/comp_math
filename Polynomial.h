@@ -20,7 +20,7 @@ public:
 	Polynomial<T>& operator=(const Polynomial<U>&);
 	~Polynomial() = default;
 private:
-	void true_degree();
+	void true_degree(double error = pow(10, -6));
 public:
 	std::size_t degree() const;
 	const std::vector<T>& coeff_() const;
@@ -37,7 +37,7 @@ public:
 	template<typename U, typename F>
 	friend Polynomial<decltype(U{} / F{}) > operator/(Polynomial<U> left, Polynomial<F> right);
 	template<typename U, typename F>
-	friend Polynomial<decltype(U{} - U{} / F{}) > operator%(const Polynomial<U>& left, const Polynomial<F>& right);
+	friend Polynomial<decltype(U{} - U{} / F{}*F{}) > operator%(const Polynomial<U>& left, const Polynomial<F>& right);
 	template<typename U, typename F>
 	friend bool operator==(const Polynomial<U>& left, const Polynomial<F>& right);
 	template<typename U, typename F>
@@ -74,9 +74,9 @@ Polynomial<T>& Polynomial<T>::operator=(const Polynomial<U>& other)
 }
 
 template<typename T>
-void Polynomial<T>::true_degree()
+void Polynomial<T>::true_degree(double error)
 {
-	while (coeff.size() - 1 && !coeff[coeff.size() - 1])
+	while (coeff.size() - 1 && std::abs(coeff[coeff.size() - 1])<=error)
 	{
 		coeff.erase(coeff.end() - 1);
 	}
@@ -200,7 +200,7 @@ Polynomial<decltype(T{} / U{}) > operator/(Polynomial<T> left, Polynomial<U> rig
 }
 
 template<typename U, typename F>
-Polynomial<decltype(U{} - U{} / F{}) > operator%(const Polynomial<U>& left, const Polynomial<F>& right)
+Polynomial<decltype(U{} - U{} / F{}*F{}) > operator%(const Polynomial<U>& left, const Polynomial<F>& right)
 {
 	return left - left / right * right;
 }

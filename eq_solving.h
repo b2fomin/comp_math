@@ -46,7 +46,7 @@ std::vector<std::pair<double, double>> rough_sol(Polynomial<T>& pol)
 
 	auto left_total = coeff[0] / (coeff[0] + *std::max_element(coeff.begin() + 1, coeff.end()));
 	auto right_total = 1 + *std::max_element(coeff.begin(), coeff.end() - 1) / coeff[coeff.size() - 1];
-	
+
 	return rough_sol(pol, left_total, right_total);
 }
 
@@ -87,7 +87,7 @@ std::vector<std::pair<double, double>> rough_sol(Polynomial<T>& pol, double left
 }
 
 template<typename T>
-double newton_method(Polynomial<T>& pol, double left_rough, double right_rough, double error=pow(10,-6))
+double newton_method(Polynomial<T>& pol, double left_rough, double right_rough, double error = pow(10, -6))
 {
 	auto der1 = pol.derivative();
 	auto der2 = der1.derivative();
@@ -95,20 +95,54 @@ double newton_method(Polynomial<T>& pol, double left_rough, double right_rough, 
 	auto der1_roots = rough_sol(der1, left_rough, right_rough);
 	auto der2_roots = rough_sol(der2, left_rough, right_rough);
 
+	decltype(der1_roots) roots_max, roots_min;
+
+	if (der1_roots.size() > der2_roots.size())
+	{
+		roots_max = std::move(der1_roots);
+		roots_min = std::move(der2_roots);
+	}
+	else
+	{
+		roots_max = std::move(der2_roots);
+		roots_min = std::move(der1_roots);
+	}
+
 	auto left = left_rough;
 	double right;
 	bool permission = false;
-	for (int i = 0; i < std::min(der1_roots.size(), der2_roots.size()); ++i)
+
+	int i = 0;
+	for (i; i < roots_min.size(); ++i)
 	{
-		right = std::min(der1_roots[i].first, der2_roots[i].first);
-		if (pol(left)*pol(right) <= 0) { permission = true; break; }
-		left = std::max(der1_roots[i].second, der2_roots[i].second);
+		auto tmp = std::min(roots_min[i].first, roots_max[i].first);
+		if (tmp >= left)
+		{
+			right = tmp;
+			if (pol(left) * pol(right) <= 0) { permission = true; break; }
+		}
+		left = std::max(roots_min[i].second, roots_max[i].second);
+	}
+
+	if (!permission)
+	{
+		for (i; i < roots_max.size(); ++i)
+		{
+			auto tmp = roots_max[i].first;
+			if (tmp >= left)
+			{
+				right = tmp;
+				if (pol(left) * pol(right) <= 0) { permission = true; break; }
+			}
+			left = std::max(roots_min[roots_min.size() - 1].second, roots_max[i].second);
+
+		}
 	}
 
 	if (!permission)
 	{
 		right = right_rough;
-		if (pol(left)*pol(right) <= 0) { permission = true; }
+		if (pol(left) * pol(right) <= 0) { permission = true; }
 		else throw std::exception("Can't use Newton's method");
 	}
 
@@ -117,7 +151,8 @@ double newton_method(Polynomial<T>& pol, double left_rough, double right_rough, 
 	else result = left;
 
 	do
-	{	delta = pol(result) / der1(result);
+	{
+		delta = pol(result) / der1(result);
 		result -= delta;
 	} while (std::abs(delta) > error);
 
