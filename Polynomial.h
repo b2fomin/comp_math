@@ -20,7 +20,7 @@ public:
 	Polynomial<T>& operator=(const Polynomial<U>&);
 	~Polynomial() = default;
 private:
-	void true_degree(double error = pow(10, -6));
+	void true_degree(double error = 1e-6);
 public:
 	std::size_t degree() const;
 	const std::vector<T>& coeff_() const;

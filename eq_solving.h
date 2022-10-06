@@ -59,7 +59,7 @@ std::vector<std::pair<double, double>> rough_sol(Polynomial<T>& pol, double left
 	for (int i = 0; i < total; ++i)
 	{
 		double left, right;
-		if (i) left = intervals[i - 1].second + pow(10, -6);
+		if (i) left = intervals[i - 1].second + 1e-6;
 		else left = left_total;
 		right = right_total;
 
@@ -87,7 +87,7 @@ std::vector<std::pair<double, double>> rough_sol(Polynomial<T>& pol, double left
 }
 
 template<typename T>
-double newton_method(Polynomial<T>& pol, double left_rough, double right_rough, double error = pow(10, -6))
+double newton_method(Polynomial<T>& pol, double left_rough, double right_rough, double error = 1e-6)
 {
 	auto der1 = pol.derivative();
 	auto der2 = der1.derivative();
@@ -134,7 +134,9 @@ double newton_method(Polynomial<T>& pol, double left_rough, double right_rough, 
 				right = tmp;
 				if (pol(left) * pol(right) <= 0) { permission = true; break; }
 			}
-			left = std::max(roots_min[roots_min.size() - 1].second, roots_max[i].second);
+			if (roots_min.size())
+				left = std::max(roots_min[roots_min.size() - 1].second, roots_max[i].second);
+			else left = roots_max[i].second;
 
 		}
 	}
@@ -143,7 +145,7 @@ double newton_method(Polynomial<T>& pol, double left_rough, double right_rough, 
 	{
 		right = right_rough;
 		if (pol(left) * pol(right) <= 0) { permission = true; }
-		else throw std::exception("Can't use Newton's method");
+		//else throw std::exception("Can't use Newton's method");
 	}
 
 	double result, delta = std::numeric_limits<double>::max();
