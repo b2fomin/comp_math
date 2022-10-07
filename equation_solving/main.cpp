@@ -3,13 +3,13 @@
 
 constexpr auto GAMMA_0 = 5. / 3;
 constexpr auto U_0 = 0.;
-constexpr auto RHO_0 = 1.694 * 1e-4;
-constexpr auto P_0 = 1.013 * 1e+6;
+constexpr auto RHO_0 = 1e-5;
+constexpr auto P_0 = 3.848 * 1e+3;
 
 constexpr auto GAMMA_3 = 7. / 5;
-constexpr auto U_3 = 1.229*1e+4;
-constexpr auto C_3 = 3.6537 * 1e+4;
-constexpr auto P_3 = 1.6768 * 1e+6;
+constexpr auto U_3 = 0.;
+constexpr auto C_3 = 2.53248 * 1e+4;
+constexpr auto P_3 = 3.04 * 1e+9;
 
 Polynomial<double> init()
 {
