@@ -12,6 +12,7 @@ private:
 	HWND hWnd;
 	HINSTANCE hInst;
 	static LPCSTR _ClassName;
+	static int count;
 public:
 	Table
 	(
@@ -49,9 +50,10 @@ bool Table::InitWndClass()
 		wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
 		wc.lpszClassName = _ClassName;
 		if (RegisterClassEx(&wc))
-			return (is_initialized = true);
+			is_initialized = true;
 		else return false;
 	}
+	return true;
 }
 
 LPCTSTR Table::ClassName() noexcept
@@ -72,6 +74,7 @@ Table::Table
 	_In_opt_ HINSTANCE hInstance
 )
 {
+	++count;
 	InitWndClass();
 	hInst = hInstance;
 	hWnd = CreateWindow(_ClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight,
@@ -83,6 +86,7 @@ Table::~Table()
 	for (auto& row : cells)
 		for (auto& cell : row) DestroyWindow(cell);
 	DestroyWindow(hWnd);
+	if (!--count) UnregisterClass(_ClassName, hInst);
 }
 
 LRESULT CALLBACK Table::InitWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -93,4 +97,9 @@ LRESULT CALLBACK Table::InitWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 		return tab->WndProc(hWnd, msg, wParam, lParam);
 	}
 	return DefWindowProc(hWnd, msg, wParam, lParam);
+}
+
+LRESULT CALLBACK Table::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	
 }
