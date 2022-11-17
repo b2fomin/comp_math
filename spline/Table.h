@@ -77,3 +77,20 @@ Table::Table
 	hWnd = CreateWindow(_ClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight,
 		hWndParent, hMenu, hInstance, reinterpret_cast<LPVOID>(this));
 }
+
+Table::~Table()
+{
+	for (auto& row : cells)
+		for (auto& cell : row) DestroyWindow(cell);
+	DestroyWindow(hWnd);
+}
+
+LRESULT CALLBACK Table::InitWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	if (msg == WM_NCCREATE)
+	{
+		auto tab = static_cast<Table*>(reinterpret_cast<CREATESTRUCT*>(lParam)->lpCreateParams);
+		return tab->WndProc(hWnd, msg, wParam, lParam);
+	}
+	return DefWindowProc(hWnd, msg, wParam, lParam);
+}
