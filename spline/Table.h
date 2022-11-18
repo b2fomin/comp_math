@@ -13,6 +13,7 @@ private:
 	HINSTANCE hInst;
 	static LPCSTR _ClassName;
 	static int count;
+	int cell_width, cell_height;
 public:
 	Table
 	(
@@ -34,6 +35,13 @@ public:
 private:
 	bool InitWndClass();
 	LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+public:
+	void AddColumn() noexcept;
+	void AddRow() noexcept;
+	void DelColumn(int index);
+	void DelRow(int index);
+private:
+	HWND CreateCell(int x, int y);
 };
 
 auto Table::_ClassName = _T("Table");
@@ -94,9 +102,30 @@ LRESULT CALLBACK Table::InitWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 	if (msg == WM_NCCREATE)
 	{
 		auto tab = static_cast<Table*>(reinterpret_cast<CREATESTRUCT*>(lParam)->lpCreateParams);
+		SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(tab));
 		return tab->WndProc(hWnd, msg, wParam, lParam);
 	}
 	return DefWindowProc(hWnd, msg, wParam, lParam);
+}
+
+HWND Table::CreateCell(int x, int y)
+{
+	return CreateWindow(WC_EDIT, nullptr, WS_CHILD | WS_VISIBLE | ES_RIGHT,
+		x, y, cell_width, cell_height, hWnd, nullptr, hInst, nullptr);
+}
+
+void Table::AddColumn()
+{
+	int rows = cells.size();
+	if (!rows)
+	{
+		cells.push_back(std::vector<HWND>());
+		cells[0].push_back(CreateCell(0,0));
+		return;
+	}
+	for (int i=0;i<cells.size();++i)
+		cells[i].push_back(CreateCell(cells[i].size() * cell_width, i*cell_height));
+
 }
 
 LRESULT CALLBACK Table::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
