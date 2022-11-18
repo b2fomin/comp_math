@@ -3,7 +3,7 @@
 #include<tchar.h>
 #include<commctrl.h>
 #include<vector>
-#include<pair>
+#include<utility>
 
 class Table
 {
@@ -172,5 +172,27 @@ LRESULT CALLBACK Table::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		else return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 	return 0;
+	case WM_LBUTTONDOWN:
+	{
+		POINT pt;
+		RECT rt;
+		pt.x = LOWORD(lParam);
+		pt.y = HIWORD(lParam);
+		for (int i=0;i<cells.size();++i)
+		{
+			for (auto j=0;j<cells[i].size();++j)
+			{
+				GetWindowRect(cells[i][j], &rt);
+				if (PtInRect(&rt, pt))
+				{
+					focused_cell = std::make_pair(i, j);
+					SetFocus(cells[i][j]);
+					return 0;
+				}
+			}
+		}
+		return DefWindowProc(hWnd, msg, wParam, lParam);
+	}
+	break;
 	}
 }
