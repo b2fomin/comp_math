@@ -3,6 +3,7 @@
 #include<tchar.h>
 #include<commctrl.h>
 #include<vector>
+#include<pair>
 
 class Table
 {
@@ -14,6 +15,7 @@ private:
 	static LPCSTR _ClassName;
 	static int count;
 	int cell_width, cell_height, rows_number, cols_number;
+	std::pair<std::size_t, std::size_t> focused_cell;
 public:
 	Table
 	(
@@ -25,7 +27,8 @@ public:
 		_In_ int nHeight,
 		_In_opt_ HWND hWndParent,
 		_In_opt_ HMENU hMenu,
-		_In_opt_ HINSTANCE hInstance
+		_In_opt_ HINSTANCE hInstance,
+		int rows_number = 10, int cols_number = 2
 	);
 	Table(const Table&) = delete;
 	Table operator=(const Table&) = delete;
@@ -77,12 +80,15 @@ Table::Table
 	_In_ int nHeight,
 	_In_opt_ HWND hWndParent,
 	_In_opt_ HMENU hMenu,
-	_In_opt_ HINSTANCE hInstance
-)
+	_In_opt_ HINSTANCE hInstance,
+	int rows_number, int cols_number
+) :
+	hInst{ hInstance },
+	rows_number{ rows_number },
+	cols_number{ cols_number }
 {
 	++count;
 	InitWndClass();
-	hInst = hInstance;
 	hWnd = CreateWindow(_ClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight,
 		hWndParent, hMenu, hInstance, reinterpret_cast<LPVOID>(this));
 }
@@ -134,5 +140,37 @@ void Table::AddRow()
 
 LRESULT CALLBACK Table::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-
+	switch (msg)
+	{
+	case WM_CREATE:
+	{
+		TEXTMETRIC tm;
+		HDC hdc = GetDC(hWnd);
+		GetTextMetrics(hdc, &tm);
+		ReleaseDC(hWnd, hdc);
+		cell_width = tm.tmAveCharWidth;
+		cell_height = tm.tmHeight + tm.tmExternalLeading;
+		cells.push_back(std::vector<HWND>(cols_number));
+		for (int i = 0; i < rows_number; ++i) AddRow();
+		SetFocus(cells[0][0]);
+		focused_cell = std::make_pair(0, 0);
+	}
+	return 0;
+	case WM_KEYDOWN:
+	{
+		if (wParam == VK_TAB)
+		{
+			if (focused_cell.first == rows_number - 1 && focused_cell.second == cols_number - 1)
+			{
+				++rows_number;
+				AddRow();
+			}
+			focused_cell = std::make_pair((focused_cell.first + 1) / cols_number,
+				(focused_cell.second + 1) % cols_number);
+			SetFocus(cells[focused_cell.first][focused_cell.second]);
+		}
+		else return DefWindowProc(hWnd, msg, wParam, lParam);
+	}
+	return 0;
+	}
 }
