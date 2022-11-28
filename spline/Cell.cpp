@@ -48,3 +48,47 @@ bool Cell::empty() const noexcept
 {
 	return !SendMessage(hWnd, EM_LINELENGTH, 0, 0);
 }
+
+LRESULT CALLBACK Cell::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	auto init_wndproc = reinterpret_cast<WNDPROC>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+	HWND hwnd;
+	switch (msg)
+	{
+	case WM_KEYDOWN:
+	{
+		switch (wParam)
+		{
+		case VK_TAB:
+		case VK_RETURN:
+			SendMessage(GetParent(hWnd), CC_KEYDOWN, wParam, lParam);
+			return 0;
+		case VK_LEFT:
+		{
+			int i, j = 0;
+			SendMessage(hWnd, EM_GETSEL, reinterpret_cast<WPARAM>(&i), reinterpret_cast<LPARAM>(&j));
+			if (!i) SendMessage(GetParent(hWnd), CC_KEYDOWN, wParam, lParam);
+			else SendMessage(hWnd, EM_SETSEL, i - 1, j - 1);
+		}
+		return 0;
+		case VK_RIGHT:
+		{
+			int i, j = 0;
+			SendMessage(hWnd, EM_GETSEL, reinterpret_cast<WPARAM>(&i), reinterpret_cast<LPARAM>(&j));
+			int length = SendMessage(hWnd, EM_LINELENGTH, 0, 0);
+			if (i == length) SendMessage(GetParent(hWnd), CC_KEYDOWN, wParam, lParam);
+			else SendMessage(hWnd, EM_SETSEL, i + 1, j + 1);
+		}
+		return 0;
+		case VK_UP:
+		case VK_DOWN:
+			SendMessage(GetParent(hWnd), CC_KEYDOWN, wParam, lParam);
+			return 0;
+		default: return init_wndproc(hWnd, msg, wParam, lParam);
+		}
+	}
+	case WM_LBUTTONDOWN:
+		SendMessage(GetParent(hWnd), CC_LBUTTONDOWN, 0, reinterpret_cast<LPARAM>(hWnd));
+		return 0;
+	default: return init_wndproc(hWnd, msg, wParam, lParam);
+	}
