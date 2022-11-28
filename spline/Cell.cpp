@@ -41,3 +41,10 @@ Cell& Cell::operator=(const Cell& other)
 	SetWindowLongPtr(hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(WndProc));
 	return *this;
 }
+
+HWND Cell::GetHWND() noexcept { return hWnd; };
+
+bool Cell::empty() const noexcept
+{
+	return !SendMessage(hWnd, EM_LINELENGTH, 0, 0);
+}
