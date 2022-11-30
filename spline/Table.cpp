@@ -227,3 +227,50 @@ LRESULT CALLBACK Table::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 	default: return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 }
+
+std::pair<std::size_t, std::size_t> Table::size() const noexcept
+{
+	return std::make_pair(cells.size(), cells[0].size());
+}
+
+HWND Table::GetHWND() const noexcept { return hWnd; };
+
+void Table::clear()
+{
+	for (auto& row : cells)
+		for (auto& cell : row)
+			SetWindowText(cell.GetHWND(), nullptr);
+}
+
+template<typename T>
+std::vector<T> Table::GetColumn(int index) const
+{
+	std::vector<T> data;
+	for (int i = 0; i < cells.size(); ++i)
+	{
+		auto& cell = cells[i][index];
+		if (!cell.empty())
+			data.push_back(cell.GetData<T>());
+	}
+	return data;
+}
+
+template<typename T>
+std::vector<T> Table::GetRow(int index) const
+{
+	std::vector<T> data;
+	const auto& row = cells[index];
+	for (auto& cell : row)
+	{
+		if (!cell.empty())
+			data.push_back(cell.GetData<T>());
+	}
+	return data;
+}
+
+template<typename T>
+void Table::SetRow(int col_index, int row_index, std::vector<T> value)
+{
+	auto& row = cells[row_index];
+	for (int i = col_index; i < row.size(); ++i) row[i].SetData(value[i - col_index]);
+}
