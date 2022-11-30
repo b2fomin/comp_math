@@ -21,3 +21,19 @@ bool App::InitWndClass()
 	}
 	return true;
 }
+
+App::App(HINSTANCE hInst) : hInst{ hInst }
+{
+	InitWndClass();
+	hWnd = CreateWindow(_ClassName, _T("Приложение"), WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
+		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, 0, nullptr, hInst, this);
+	tab = Table(nullptr, WS_CHILD | WS_VISIBLE, 0, 0, 0, 0, hWnd, nullptr, hInst);
+	ShowWindow(hWnd, SW_SHOWDEFAULT);
+	UpdateWindow(hWnd);
+}
+
+App::~App()
+{
+	DestroyWindow(hWnd);
+	if (!--count) UnregisterClass(_ClassName, hInst);
+}
