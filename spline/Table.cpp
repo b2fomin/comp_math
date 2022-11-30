@@ -107,3 +107,39 @@ Table& Table::operator=(const Table& other)
 	return *this;
 }
 
+LRESULT CALLBACK Table::InitWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	Table* tab;
+	if (msg == WM_NCCREATE)
+	{
+		tab = static_cast<Table*>(reinterpret_cast<CREATESTRUCT*>(lParam)->lpCreateParams);
+		SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(tab));
+		return tab->WndProc(hWnd, msg, wParam, lParam);
+	}
+	else tab = reinterpret_cast<Table*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+	if (!tab) return DefWindowProc(hWnd, msg, wParam, lParam);
+	else return tab->WndProc(hWnd, msg, wParam, lParam);
+}
+
+void Table::AddColumn(bool is_readonly)
+{
+	for (int i = 0; i < cells.size(); ++i)
+	{
+		cells[i].push_back(Cell(hWnd, hInst, cells[i].size() * cell_width,
+			i * cell_height, cell_width, cell_height));
+		if (is_readonly) SendMessage(cells[i][cells[i].size() - 1].GetHWND(), EM_SETREADONLY, ES_READONLY, 0);
+	}
+}
+
+void Table::AddRow(bool is_readonly)
+{
+	cells.push_back(std::vector<Cell>(0));
+	auto& row = *(cells.end() - 1);
+	for (int i = 0; i < cells[0].size(); ++i)
+	{
+		row.push_back(Cell(hWnd, hInst, i * cell_width,
+			(cells.size() - 1) * cell_height, cell_width, cell_height));
+		if (is_readonly) SendMessage(row[i].GetHWND(), EM_SETREADONLY, ES_READONLY, 0);
+	}
+}
+
