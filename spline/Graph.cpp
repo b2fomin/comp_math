@@ -197,3 +197,15 @@ LRESULT CALLBACK Graph::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		return DefWindowProc(hWnd, msg, wParam, lParam);
 	}
 }
+
+void Graph::clear() noexcept
+{
+	data.clear();
+	points.clear();
+	InvalidateRect(hWnd, nullptr, TRUE);
+}
+
+HWND Graph::GetHWND() noexcept
+{
+	return hWnd;
+}
