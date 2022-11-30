@@ -143,3 +143,87 @@ void Table::AddRow(bool is_readonly)
 	}
 }
 
+LRESULT CALLBACK Table::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (msg)
+	{
+	case WM_CREATE:
+	{
+		TEXTMETRIC tm;
+		HDC hdc = GetDC(hWnd);
+		GetTextMetrics(hdc, &tm);
+		ReleaseDC(hWnd, hdc);
+		cell_width = 10 * tm.tmAveCharWidth;
+		cell_height = tm.tmHeight + tm.tmExternalLeading + GetSystemMetrics(SM_CXSIZEFRAME);
+	}
+	return 0;
+	case CC_KEYDOWN:
+	{
+		switch (wParam)
+		{
+		case VK_TAB:
+		{
+			if (focused_cell.first == cells.size() - 1 && focused_cell.second == cells[0].size() - 1)
+			{
+				AddRow();
+			}
+			focused_cell.second = (focused_cell.second + 1) % cells[0].size();
+			if (!focused_cell.second) ++focused_cell.first;
+			SetFocus(cells[focused_cell.first][focused_cell.second].GetHWND());
+		}
+		return 0;
+		case VK_RETURN:
+		{
+			if (focused_cell.first == cells.size() - 1)	AddRow();
+			++focused_cell.first;
+			SetFocus(cells[focused_cell.first][focused_cell.second].GetHWND());
+		}
+		return 0;
+		case VK_LEFT:
+		{
+			if (focused_cell.second) --focused_cell.second;
+			SetFocus(cells[focused_cell.first][focused_cell.second].GetHWND());
+		}
+		return 0;
+		case VK_RIGHT:
+		{
+			if (focused_cell.second < cells[0].size() - 1) ++focused_cell.second;
+			SetFocus(cells[focused_cell.first][focused_cell.second].GetHWND());
+		}
+		return 0;
+		case VK_UP:
+		{
+			if (focused_cell.first) --focused_cell.first;
+			SetFocus(cells[focused_cell.first][focused_cell.second].GetHWND());
+		}
+		return 0;
+		case VK_DOWN:
+		{
+			if (focused_cell.second < cells.size() - 1) ++focused_cell.first;
+			SetFocus(cells[focused_cell.first][focused_cell.second].GetHWND());
+		}
+		return 0;
+		default: return DefWindowProc(hWnd, msg, wParam, lParam);
+		}
+	}
+	return 0;
+	case CC_LBUTTONDOWN:
+	{
+		auto hwnd = reinterpret_cast<HWND>(lParam);
+		for (int i = 0; i < cells.size(); ++i)
+		{
+			for (auto j = 0; j < cells[i].size(); ++j)
+			{
+				if (cells[i][j].GetHWND() == hwnd)
+				{
+					focused_cell = std::make_pair(i, j);
+					SetFocus(hwnd);
+					return 0;
+				}
+			}
+		}
+		return DefWindowProc(hWnd, msg, wParam, lParam);
+	}
+	default: return DefWindowProc(hWnd, msg, wParam, lParam);
+	}
+}
