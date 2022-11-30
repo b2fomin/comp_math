@@ -92,3 +92,50 @@ Graph& Graph::operator=(const Graph& other)
 	hline = CreatePen(PS_SOLID, 6, RGB(0, 0, 255));
 	return *this;
 }
+
+LRESULT CALLBACK Graph::InitWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	Graph* graph;
+	if (msg == WM_NCCREATE)
+	{
+		graph = static_cast<Graph*>(reinterpret_cast<CREATESTRUCT*>(lParam)->lpCreateParams);
+		SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(graph));
+	}
+	else graph = reinterpret_cast<Graph*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+	if (!graph) return DefWindowProc(hWnd, msg, wParam, lParam);
+	else return graph->WndProc(hWnd, msg, wParam, lParam);
+}
+
+template<typename T>
+void Graph::AddFuncGraph(T func, double min_x, double max_x, int count)
+{
+	for (double x = min_x; x < max_x; x += (max_x - min_x) / count)
+	{
+		data.push_back({ x, func(x) });
+	}
+}
+
+void Graph::ShowGraph()
+{
+	max_x = max_y = -INFINITY;
+	min_x = min_y = INFINITY;
+	for (auto& elem : data)
+	{
+		auto x = elem.x; auto y = elem.y;
+		if (x < min_x) min_x = x;
+		else if (x > max_x) max_x = x;
+
+		if (y < min_y) min_y = y;
+		else if (y > max_y) max_y = y;
+	}
+
+	for (auto& elem : data)
+	{
+		POINT pt;
+		auto x = elem.x; auto y = elem.y;
+		pt.y = static_cast<int>((y - min_y) * GraphWidth / (max_y - min_y) + 0.5);
+		pt.x = static_cast<int>((x - min_x) * GraphWidth / (max_x - min_x) + 0.5);
+		points.push_back(pt);
+	}
+	InvalidateRect(hWnd, nullptr, TRUE);
+}
