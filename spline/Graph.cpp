@@ -139,3 +139,61 @@ void Graph::ShowGraph()
 	}
 	InvalidateRect(hWnd, nullptr, TRUE);
 }
+
+LRESULT CALLBACK Graph::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	switch (msg)
+	{
+	case WM_SIZE:
+	{
+		sx = LOWORD(lParam);
+		sy = HIWORD(lParam);
+	}
+	return 0;
+	case WM_PAINT:
+	{
+		if (points.empty()) return DefWindowProc(hWnd, msg, wParam, lParam);
+		PAINTSTRUCT ps;
+		RECT rt;
+		GetWindowRect(hWnd, &rt);
+		auto hdc = BeginPaint(hWnd, &ps);
+		double hx = (max_x - min_x) / ticksX;
+		double hy = (max_y - min_y) / ticksY;
+		SetMapMode(hdc, MM_ANISOTROPIC);
+		SetWindowExtEx(hdc, GraphSize, -GraphSize, nullptr);
+		SetViewportExtEx(hdc, min(sx, sy), min(sx, sy), nullptr);
+		SetViewportOrgEx(hdc, 3 * indent, min(sx, sy) - indent, nullptr);
+		SetTextAlign(hdc, TA_RIGHT | TA_TOP);
+		TCHAR s[20];
+		double z; int i;
+		for (z = min_x, i = 0; i <= ticksX; z += hx, ++i)
+		{
+			int x = ((z - min_x) * GraphWidth / (max_x - min_x) + 0.5);
+			_stprintf_s(s, _T("%.1lE"), z);
+			TextOut(hdc, x, 0, s, _tcslen(s));
+			MoveToEx(hdc, x, -10, nullptr);
+			LineTo(hdc, x, 10);
+		}
+		MoveToEx(hdc, 0, 0, nullptr);
+		LineTo(hdc, GraphWidth, 0);
+		SetTextAlign(hdc, TA_RIGHT | TA_BOTTOM);
+		for (z = min_y, i = 0; i <= ticksY; z += hy, ++i)
+		{
+			int y = int((z - min_y) * GraphWidth / (max_y - min_y) + 0.5);
+			_stprintf_s(s, _T("%.1lE"), z);
+			TextOut(hdc, 0, y, s, _tcslen(s));
+			MoveToEx(hdc, -10, y, nullptr);
+			LineTo(hdc, 10, y);
+		}
+		MoveToEx(hdc, 0, 0, nullptr);
+		LineTo(hdc, 0, GraphWidth);
+		SelectObject(hdc, hline);
+		Polyline(hdc, points.data(), points.size());
+		EndPaint(hWnd, &ps);
+		UpdateWindow(hWnd);
+	}
+	return 0;
+	default:
+		return DefWindowProc(hWnd, msg, wParam, lParam);
+	}
+}
