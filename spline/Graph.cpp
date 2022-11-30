@@ -106,15 +106,6 @@ LRESULT CALLBACK Graph::InitWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
 	else return graph->WndProc(hWnd, msg, wParam, lParam);
 }
 
-template<typename T>
-void Graph::AddFuncGraph(T func, double min_x, double max_x, int count)
-{
-	for (double x = min_x; x < max_x; x += (max_x - min_x) / count)
-	{
-		data.push_back({ x, func(x) });
-	}
-}
-
 void Graph::ShowGraph()
 {
 	max_x = max_y = -INFINITY;

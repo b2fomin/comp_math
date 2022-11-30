@@ -42,7 +42,7 @@ Cell& Cell::operator=(const Cell& other)
 	return *this;
 }
 
-HWND Cell::GetHWND() noexcept { return hWnd; };
+HWND Cell::GetHWND() const noexcept { return hWnd; };
 
 bool Cell::empty() const noexcept
 {
@@ -92,3 +92,4 @@ LRESULT CALLBACK Cell::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 		return 0;
 	default: return init_wndproc(hWnd, msg, wParam, lParam);
 	}
+}

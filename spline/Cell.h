@@ -21,7 +21,7 @@ public:
 
 	Cell(const Cell&);
 	Cell& operator=(const Cell&);
-	HWND GetHWND() noexcept;
+	HWND GetHWND() const noexcept;
 
 	template<typename T>
 	T GetData() const

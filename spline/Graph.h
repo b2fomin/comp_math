@@ -35,3 +35,12 @@ public:
 	void clear() noexcept;
 	HWND GetHWND() noexcept;
 };
+
+template<typename T>
+void Graph::AddFuncGraph(T func, double min_x, double max_x, int count)
+{
+	for (double x = min_x; x < max_x; x += (max_x - min_x) / count)
+	{
+		data.push_back({ x, func(x) });
+	}
+}
