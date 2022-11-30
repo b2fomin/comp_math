@@ -38,3 +38,57 @@ Graph::~Graph()
 	DestroyWindow(hWnd);
 	if (!--count) UnregisterClass(_ClassName, hInst);
 };
+
+Graph::Graph(const Graph& other)
+{
+	hInst = other.hInst;
+	RECT rt;
+	TCHAR name[256];
+	GetWindowText(other.hWnd, name, 256);
+	GetWindowRect(other.hWnd, &rt);
+	MapWindowPoints(HWND_DESKTOP, GetParent(other.hWnd), reinterpret_cast<LPPOINT>(&rt), 2);
+	hWnd = CreateWindow(_ClassName, name, GetWindowLong(other.hWnd, GWL_STYLE), rt.left, rt.top,
+		rt.right - rt.left, rt.bottom - rt.top, GetParent(other.hWnd), GetMenu(other.hWnd), other.hInst, nullptr);
+	SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+	data = other.data;
+	GraphSize = other.GraphSize;
+	GraphWidth = other.GraphWidth;
+	indent = other.indent;
+	max_x = other.max_x;
+	max_y = other.max_y;
+	min_x = other.min_x;
+	min_y = other.min_y;
+	ticksX = other.ticksX;
+	ticksY = other.ticksY;
+	sx = other.sx;
+	sy = other.sy;
+	hline = CreatePen(PS_SOLID, 6, RGB(0, 0, 255));
+}
+
+Graph& Graph::operator=(const Graph& other)
+{
+
+	hInst = other.hInst;
+	RECT rt;
+	TCHAR name[256];
+	GetWindowText(other.hWnd, name, 256);
+	GetWindowRect(other.hWnd, &rt);
+	MapWindowPoints(HWND_DESKTOP, GetParent(other.hWnd), reinterpret_cast<LPPOINT>(&rt), 2);
+	hWnd = CreateWindow(_ClassName, name, GetWindowLong(other.hWnd, GWL_STYLE), rt.left, rt.top,
+		rt.right - rt.left, rt.bottom - rt.top, GetParent(other.hWnd), GetMenu(other.hWnd), other.hInst, nullptr);
+	SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+	data = other.data;
+	GraphSize = other.GraphSize;
+	GraphWidth = other.GraphWidth;
+	indent = other.indent;
+	max_x = other.max_x;
+	max_y = other.max_y;
+	min_x = other.min_x;
+	min_y = other.min_y;
+	ticksX = other.ticksX;
+	ticksY = other.ticksY;
+	sx = other.sx;
+	sy = other.sy;
+	hline = CreatePen(PS_SOLID, 6, RGB(0, 0, 255));
+	return *this;
+}
