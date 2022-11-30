@@ -37,3 +37,27 @@ App::~App()
 	DestroyWindow(hWnd);
 	if (!--count) UnregisterClass(_ClassName, hInst);
 }
+
+void App::Run()
+{
+	MSG msg;
+	while (GetMessage(&msg, nullptr, 0, 0))
+	{
+		TranslateMessage(&msg);
+		DispatchMessage(&msg);
+	}
+	return;
+}
+
+LRESULT CALLBACK App::InitWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	App* app;
+	if (msg == WM_NCCREATE)
+	{
+		app = static_cast<App*>(reinterpret_cast<CREATESTRUCT*>(lParam)->lpCreateParams);
+		SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(app));
+	}
+	else app = reinterpret_cast<App*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+	if (!app) return DefWindowProc(hWnd, msg, wParam, lParam);
+	return app->WndProc(hWnd, msg, wParam, lParam);
+}
