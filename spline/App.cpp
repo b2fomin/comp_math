@@ -61,3 +61,70 @@ LRESULT CALLBACK App::InitWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 	if (!app) return DefWindowProc(hWnd, msg, wParam, lParam);
 	return app->WndProc(hWnd, msg, wParam, lParam);
 }
+
+LRESULT CALLBACK App::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+	int sx, sy;
+
+	switch (msg)
+	{
+	case WM_SIZE:
+	{
+		sx = LOWORD(lParam);
+		sy = HIWORD(lParam);
+
+		MoveWindow(tab.GetHWND(), 0, 0, sx, sy, TRUE);
+		UpdateWindow(tab.GetHWND());
+	}
+	return 0;
+	case WM_COMMAND:
+	{
+		switch (LOWORD(wParam))
+		{
+		case IDM_CLEAR:
+		{
+			tab.clear();
+		}
+		return 0;
+		case IDM_GRAPH:
+			if (!IsWindow(graph.GetHWND()))
+				graph = Graph(_T("График"), WS_SYSMENU | WS_POPUP | WS_VISIBLE | WS_THICKFRAME | WS_CAPTION,
+					hWnd, hInst, 100, 100, 640, 480, 5, 5);
+			else graph.clear();
+			for (int i = 1; i < tab.size().first; ++i)
+			{
+				auto coeff = tab.GetRow<double>(i);
+				if (coeff.empty()) continue;
+				graph.AddFuncGraph(
+					[&coeff, &i](double x)
+					{
+						return coeff[2] + coeff[3] * (x - coeff[0]) + coeff[4] * pow((x - coeff[0]), 2) + coeff[5] * pow(x - coeff[0], 3);
+					},
+					tab.GetRow<double>(i - 1)[0], coeff[0], 100);
+			}
+			graph.ShowGraph();
+			return 0;
+		case IDM_CALC:
+		{
+			if (tab.size().second == 2)
+				for (int i = 0; i < 4; ++i)	tab.AddColumn(true);
+			auto x = tab.GetColumn<double>(0);
+			auto y = tab.GetColumn<double>(1);
+			std::vector<std::vector<double>> data(x.size());
+			for (int i = 0; i < data.size(); ++i)
+				data[i] = std::vector<double>{ x[i], y[i] };
+			auto coeff = spline(data);
+			for (int i = 0; i < coeff.size(); ++i)
+				tab.SetRow(2, i + 1, coeff[i]);
+		}
+		return 0;
+		default:return DefWindowProc(hWnd, msg, wParam, lParam);
+		}
+	}
+	return 0;
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		return 0;
+	default: return DefWindowProc(hWnd, msg, wParam, lParam);
+	}
+}
