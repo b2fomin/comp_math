@@ -25,3 +25,41 @@ auto system_solving(const std::vector<std::vector<double>>& system)
 
 	return sol;
 }
+
+auto spline(const std::vector<std::vector<double>>& data)
+{
+	int N = data.size() - 1;
+	if (N < 2) return std::vector<std::vector<double>>(0);
+	std::vector<std::vector<double>> sol(N);
+	for (int i = 0; i < N; ++i)
+	{
+		sol[i] = std::vector<double>(4);
+		sol[i][0] = data[i + 1][1];
+	}
+	sol[N - 1][3] = 0;
+	std::vector<std::vector<double>> system(N - 1);
+	for (int i = 0; i < N - 1; ++i)
+	{
+		system[i] = std::vector<double>(4);
+		system[i][0] = data[i + 1][0] - data[i][0];
+		system[i][1] = 2 * (data[i + 1][0] -
+			data[i][0] + data[i + 2][0] - data[i + 1][0]);
+		system[i][2] = data[i + 2][0] - data[i + 1][0];
+		system[i][3] = 3 * ((data[i + 2][1] - data[i + 1][1]) / (data[i + 2][0] - data[i + 1][0]) -
+			(data[i + 1][1] - data[i][1]) / (data[i + 1][0] - data[i][0]));
+	}
+	system[0][0] = system[N - 2][2] = 0;
+	auto c = system_solving(system);
+	c.insert(c.begin(), 0);
+	c.push_back(0);
+	for (int i = 0; i < N; ++i)
+	{
+		sol[i][1] = (data[i + 1][1] - data[i][1]) /
+			(data[i + 1][0] - data[i][0]) + (2 * c[i + 1] + c[i]) /
+			3 * (data[i + 1][0] - data[i][0]);
+		sol[i][2] = c[i + 1];
+		sol[i][3] = (c[i + 1] - c[i]) / 3 / (data[i + 1][0] - data[i][0]);
+	}
+
+	return sol;
+}
