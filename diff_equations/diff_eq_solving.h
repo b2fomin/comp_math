@@ -39,8 +39,8 @@ std::vector<double> Runge_Kutta(T func, double x_0, double x_n, std::size_t coun
 
 const std::vector<std::vector<double>> Heun_table
 {
-	{0,0,0,0},
-	{1. / 3.,1. / 3.,0,0},
-	{2. / 3.,0,2. / 3.,0},
-	{0,1 / 4,0,3 / 4}
+	{0, 0, 0, 0},
+	{1. / 3., 1. / 3., 0, 0},
+	{2. / 3., 0, 2. / 3., 0},
+	{0, 1. / 4., 0, 3. / 4.}
 };
