@@ -15,7 +15,7 @@ private:
 	HINSTANCE hInst;
 	static LPCTSTR _ClassName;
 	static int count;
-	int cell_width, cell_height;
+	int cell_width, cell_height, iVscrollPos;
 	std::pair<std::size_t, std::size_t> focused_cell;
 public:
 	Table

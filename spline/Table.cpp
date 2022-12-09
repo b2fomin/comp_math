@@ -33,7 +33,7 @@ Table::Table
 	HINSTANCE hInstance,
 	int rows_number, int cols_number
 ) :
-	hInst{ hInstance }
+	hInst{ hInstance }, iVscrollPos{ 0 }
 {
 	InitWndClass();
 	++count;
@@ -74,6 +74,11 @@ Table::Table(const Table& other)
 			SetParent(cells[i][j].GetHWND(), hWnd);
 			MoveWindow(cells[i][j].GetHWND(), rt.left, rt.top, rt.right - rt.left, rt.bottom - rt.top, TRUE);
 		}
+	int min_pos, max_pos;
+	GetScrollRange(other.hWnd, SB_VERT, &min_pos, &max_pos);
+	SetScrollRange(hWnd, SB_VERT, min_pos, max_pos, FALSE);
+	iVscrollPos = GetScrollPos(other.hWnd, SB_VERT);
+	SetScrollPos(hWnd, SB_VERT, iVscrollPos, TRUE);
 	cell_width = other.cell_width;
 	cell_height = other.cell_height;
 	focused_cell = other.focused_cell;
@@ -100,6 +105,11 @@ Table& Table::operator=(const Table& other)
 			SetParent(cells[i][j].GetHWND(), hWnd);
 			MoveWindow(cells[i][j].GetHWND(), rt.left, rt.top, rt.right - rt.left, rt.bottom - rt.top, TRUE);
 		}
+	int min_pos, max_pos;
+	GetScrollRange(other.hWnd, SB_VERT, &min_pos, &max_pos);
+	SetScrollRange(hWnd, SB_VERT, min_pos, max_pos, FALSE);
+	iVscrollPos = GetScrollPos(other.hWnd, SB_VERT);
+	SetScrollPos(hWnd, SB_VERT, iVscrollPos, TRUE);
 	cell_width = other.cell_width;
 	cell_height = other.cell_height;
 	focused_cell = other.focused_cell;
@@ -157,6 +167,55 @@ LRESULT CALLBACK Table::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		cell_height = tm.tmHeight + tm.tmExternalLeading + GetSystemMetrics(SM_CXSIZEFRAME);
 	}
 	return 0;
+	case WM_SIZE:
+	{
+		POINT pt;
+		pt.x = LOWORD(lParam);
+		pt.y = HIWORD(lParam);
+		SetScrollRange(hWnd, SB_VERT, 0, pt.y / cell_height, FALSE);
+		SetScrollPos(hWnd, SB_VERT, iVscrollPos, TRUE);
+	}
+	return 0;
+	case WM_VSCROLL:
+	{
+		RECT rt;
+		GetWindowRect(hWnd, &rt);
+		MapWindowPoints(HWND_DESKTOP, hWnd, reinterpret_cast<LPPOINT>(&rt), 2);
+		switch (LOWORD(wParam))
+		{
+		case SB_LINEUP: --iVscrollPos; break;
+		case SB_LINEDOWN: ++iVscrollPos; break;
+		case SB_PAGEUP: iVscrollPos -= (rt.bottom - rt.top) / cell_height; break;
+		case SB_PAGEDOWN: iVscrollPos += (rt.bottom - rt.top) / cell_height; break;
+		case SB_THUMBTRACK:
+		case SB_THUMBPOSITION: iVscrollPos = HIWORD(wParam); break;
+		}
+		int min_pos, max_pos;
+		int count = cells.size() - GetScrollRange(hWnd, SB_VERT, &min_pos, &max_pos);
+		if (count < 0) count = 0;
+		iVscrollPos = max(0, min(iVscrollPos, count));
+		if (iVscrollPos != GetScrollPos(hWnd, SB_VERT))
+		{
+			SetScrollPos(hWnd, SB_VERT, iVscrollPos, TRUE);
+			RECT rt0;
+			if (!cells.empty() && !cells[0].empty())
+			{
+				GetWindowRect(cells[0][0].GetHWND(), &rt0);
+				MapWindowPoints(HWND_DESKTOP, hWnd, reinterpret_cast<LPPOINT>(&rt0), 2);
+			}
+			rt0.top += iVscrollPos * cell_height;
+			for (auto& row : cells)
+				for (auto& cell : row)
+				{
+					GetWindowRect(cell.GetHWND(), &rt);
+					MapWindowPoints(HWND_DESKTOP, hWnd, reinterpret_cast<LPPOINT>(&rt), 2);
+					MoveWindow(cell.GetHWND(), rt.left - rt0.left, rt.top - rt0.top,
+						rt.right - rt.left, rt.bottom - rt.top, TRUE);
+					UpdateWindow(cell.GetHWND());
+				}
+		}
+	}
+	return 0;
 	case CC_KEYDOWN:
 	{
 		switch (wParam)
@@ -193,14 +252,20 @@ LRESULT CALLBACK Table::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		return 0;
 		case VK_UP:
 		{
-			if (focused_cell.first) --focused_cell.first;
-			SetFocus(cells[focused_cell.first][focused_cell.second].GetHWND());
+			if (focused_cell.first)	--focused_cell.first;
+			auto cell_hWnd = cells[focused_cell.first][focused_cell.second].GetHWND();
+			int min_pos, max_pos; GetScrollRange(hWnd, SB_VERT, &min_pos, &max_pos);
+			if (focused_cell.first < iVscrollPos + min_pos) SendMessage(hWnd, WM_VSCROLL, SB_LINEUP, 0);
+			SetFocus(cell_hWnd);
 		}
 		return 0;
 		case VK_DOWN:
 		{
-			if (focused_cell.second < cells.size() - 1) ++focused_cell.first;
-			SetFocus(cells[focused_cell.first][focused_cell.second].GetHWND());
+			if (focused_cell.first < cells.size() - 1)	++focused_cell.first;
+			auto cell_hWnd = cells[focused_cell.first][focused_cell.second].GetHWND();
+			int min_pos, max_pos; GetScrollRange(hWnd, SB_VERT, &min_pos, &max_pos);
+			if (focused_cell.first > iVscrollPos + max_pos) SendMessage(hWnd, WM_VSCROLL, SB_LINEDOWN, 0);
+			SetFocus(cell_hWnd);
 		}
 		return 0;
 		default: return DefWindowProc(hWnd, msg, wParam, lParam);
@@ -245,7 +310,7 @@ LRESULT CALLBACK Table::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 			}
 			else data += ss.get();
 		}
-		if(!data.empty()) cells[i][j].SetData(data.data());
+		if (!data.empty()) cells[i][j].SetData(data.data());
 		focused_cell = std::make_pair(i, j);
 		SetFocus(cells[i][j].GetHWND());
 	}
