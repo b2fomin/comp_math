@@ -49,6 +49,8 @@ bool Cell::empty() const noexcept
 	return !SendMessage(hWnd, EM_LINELENGTH, 0, 0);
 }
 
+void Cell::SetData(const char* value) { SetWindowTextA(hWnd, value); };
+
 LRESULT CALLBACK Cell::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	auto init_wndproc = reinterpret_cast<WNDPROC>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
@@ -84,6 +86,32 @@ LRESULT CALLBACK Cell::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 		case VK_DOWN:
 			SendMessage(GetParent(hWnd), CC_KEYDOWN, wParam, lParam);
 			return 0;
+		default: return init_wndproc(hWnd, msg, wParam, lParam);
+		}
+	}
+	case WM_CHAR:
+	{
+		switch (wParam)
+		{
+		case 22://ctrl+V
+		{
+			std::string data;
+			if (OpenClipboard(nullptr))
+			{
+				auto hData = GetClipboardData(CF_TEXT);
+				char* pszText = static_cast<char*>(GlobalLock(hData));
+				data = std::string{ pszText };
+				GlobalUnlock(hData);
+				CloseClipboard();
+			}
+			else return init_wndproc(hWnd, msg, wParam, lParam);
+
+			if (std::find(data.begin(), data.end(), '\t') != data.end())
+				SendMessage(GetParent(hWnd), CC_PASTE, reinterpret_cast<WPARAM>(hWnd),
+					reinterpret_cast<LPARAM>(data.data()));
+			else return init_wndproc(hWnd, msg, wParam, lParam);
+		}
+		return 0;
 		default: return init_wndproc(hWnd, msg, wParam, lParam);
 		}
 	}

@@ -207,6 +207,49 @@ LRESULT CALLBACK Table::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 		}
 	}
 	return 0;
+	case CC_PASTE:
+	{
+		auto cell_hWnd = reinterpret_cast<HWND>(wParam);
+		std::stringstream ss; ss << reinterpret_cast<char*>(lParam);
+
+		int i = 0, j = 0;
+		for (int i = 0; i < cells.size(); ++i)
+		{
+			for (int j = 0; j < cells[j].size(); ++j)
+			{
+				if (cell_hWnd == cells[i][j].GetHWND())
+					break;
+			}
+
+			if (cell_hWnd == cells[i][j].GetHWND())
+				break;
+		}
+		std::string data;
+		while (!ss.eof())
+		{
+			if (ss.peek() == '\n')
+			{
+				ss.get();
+				cells[i][j].SetData(data.data());
+				data.clear();
+				if (i == cells.size() - 1) AddRow();
+				++i; j = 0;
+			}
+			else if (ss.peek() == '\t')
+			{
+				ss.get();
+				cells[i][j].SetData(data.data());
+				data.clear();
+				if (j == cells[0].size() - 1) AddColumn();
+				++j;
+			}
+			else data += ss.get();
+		}
+		if(!data.empty()) cells[i][j].SetData(data.data());
+		focused_cell = std::make_pair(i, j);
+		SetFocus(cells[i][j].GetHWND());
+	}
+	return 0;
 	case CC_LBUTTONDOWN:
 	{
 		auto hwnd = reinterpret_cast<HWND>(lParam);

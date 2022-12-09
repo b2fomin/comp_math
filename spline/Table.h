@@ -4,6 +4,7 @@
 #include<commctrl.h>
 #include<vector>
 #include<utility>
+#include<sstream>
 #include"Cell.h"
 
 class Table
@@ -82,5 +83,12 @@ template<typename T>
 void Table::SetRow(int col_index, int row_index, std::vector<T> value)
 {
 	auto& row = cells[row_index];
-	for (int i = col_index; i < row.size(); ++i) row[i].SetData(value[i - col_index]);
+	for (int i = col_index; i < row.size(); ++i)
+	{
+		std::string data;
+		if constexpr (std::is_same_v<std::remove_const_t<T>, std::string>) data = value[i - col_index];
+		else if constexpr (std::is_arithmetic_v<T>) data = std::to_string(value[i - col_index]).data();
+		else continue;
+		row[i].SetData(data.data());
+	}
 }

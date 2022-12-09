@@ -3,10 +3,12 @@
 #include<tchar.h>
 #include<commctrl.h>
 #include<string>
+#include<algorithm>
 #include<sstream>
 
 #define CC_KEYDOWN 15000
 #define CC_LBUTTONDOWN 15001
+#define CC_PASTE 15002
 
 class Cell
 {
@@ -35,12 +37,7 @@ public:
 		return value;
 	}
 
-	template<typename T>
-	void SetData(T value)
-	{
-		auto s = std::to_string(value);
-		SetWindowTextA(hWnd, s.data());
-	}
+	void SetData(const char*);
 
 	bool empty() const noexcept;
 };
