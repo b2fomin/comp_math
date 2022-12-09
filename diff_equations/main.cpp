@@ -23,7 +23,8 @@ double norm(const std::vector<double>& y1, const std::vector<double>& y2)
 
 double f(double x, double y)
 {
-    return 2 * x;
+    return -(3 * y * y + 2 * x * y + 2 * x) /
+        (6 * x * y + x * x + 3);
 }
 
 int main()
