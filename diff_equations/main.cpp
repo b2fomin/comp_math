@@ -36,6 +36,8 @@ int main()
     double eps; std::cin >> eps;
     std::cout << std::endl << "Начальные условия: ";
     double y_init; std::cin >> y_init;
+    std::cout << std::endl << "Количество выводимых точек: ";
+    std::size_t count; std::cin >> count;
     std::cout << std::endl;
     auto& Butcher_table = Heun_table;
 
@@ -52,4 +54,12 @@ int main()
     std::cout << std::setprecision(5);
 
     std::cout << "Шаг h: " << h << std::endl;
+
+    double ratio = static_cast<double>(y1.size()) / count;
+    for (int i = 0; i < count; ++i)
+    {
+        auto j = static_cast<std::size_t>(i * ratio);
+        auto x = x_0 + j * h;
+        std::cout << x << '\t' << y1[j] << std::endl;
+    }
 }
