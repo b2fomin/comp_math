@@ -203,11 +203,14 @@ LRESULT CALLBACK Table::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 			RECT rt;
 			GetWindowRect(cells[0][0].GetHWND(), &rt);
 			MapWindowPoints(HWND_DESKTOP, hWnd, reinterpret_cast<LPPOINT>(&rt), 2);
-			for (int i = min_pos + iVscrollPos; i < min(cells.size(), max_pos + iVscrollPos); ++i)
+			auto left = rt.left;
+			GetClientRect(hWnd, &rt);
+			for (int i = min_pos + iVscrollPos; i < min(cells.size(),
+				min_pos + iVscrollPos + (rt.bottom - rt.top) / cell_height); ++i)
 			{
 				for (int j = 0; j < cells[i].size(); ++j)
 				{
-					MoveWindow(cells[i][j].GetHWND(), j * cell_width + rt.left,
+					MoveWindow(cells[i][j].GetHWND(), j * cell_width + left,
 						(i - (min_pos + iVscrollPos)) * cell_height, cell_width, cell_height, TRUE);
 					UpdateWindow(cells[i][j].GetHWND());
 				}
@@ -266,7 +269,7 @@ LRESULT CALLBACK Table::WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPara
 			RECT rt;
 			GetWindowRect(hWnd, &rt);
 			MapWindowPoints(HWND_DESKTOP, hWnd, reinterpret_cast<LPPOINT>(&rt), 2);
-			if (focused_cell.first > iVscrollPos + min_pos+(rt.bottom-rt.top)/cell_height)
+			if (focused_cell.first > iVscrollPos + min_pos + (rt.bottom - rt.top) / cell_height)
 				SendMessage(hWnd, WM_VSCROLL, SB_LINEDOWN, 0);
 			SetFocus(cell_hWnd);
 		}
