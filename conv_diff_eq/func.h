@@ -3,22 +3,22 @@
 
 double a(double x, double t)
 {
-	return -1;
+	return -(x + std::exp(-t));
 }
 
 double b(double x, double t)
 {
-	return t;
+	return x * (x + std::exp(-t));
 }
 
 double varphi(double x)
 {
-	return x + 1;
+	return -x * x / 2 + x;
 }
 
 double psi(double t)
 {
-	return std::exp(t) + t + 1;
+	return std::exp(t) + t - .5;
 }
 template<typename T>
 auto der_1st(T f, double dx)
