@@ -13,7 +13,7 @@ int main()
 {
 	constexpr double eps = 8e-3;
 	constexpr int ratio = 2;
-	std::size_t L = 2, N = 2;
+	std::size_t L = 2;
 	std::vector<double> u;
 	bool stop = false;
 	double norm_x, norm_t, prev_norm_x, prev_norm_t;
@@ -26,8 +26,8 @@ int main()
 		stop = true;
 
 		u = std::vector<double>(L, 0);
-		std::vector<double> vec_norm_x(N, 0), vec_norm_t(L, 0);
-		double h = 1. / (L - 1), tau = 1. / (N - 1);
+		std::vector<double> vec_norm_x(1), vec_norm_t(L, 0);
+		double h = 1. / (L - 1), t = 0;
 		for (int i = 0; i < L; ++i)
 		{
 			u[i] = varphi(i * h);
@@ -35,18 +35,22 @@ int main()
 			vec_norm_t[i] += u[i] * u[i];
 		}
 
-		for (int i = 0; i < N - 1; ++i)
+		while(t < 1)
 		{
-			auto t = i * tau;
+			auto a_max = *std::max_element(u.begin(), u.end());
+			auto tau = 2 * h / a_max;
+			t += tau;
+			vec_norm_x.push_back(0);
 			auto u_copy = std::vector<double>(u);
 
 			const std::size_t max_threads = u_copy.size();
 			const std::size_t hardware_threads = std::thread::hardware_concurrency();
 			const std::size_t num_threads = std::min(hardware_threads == 0 ? 2 : hardware_threads, max_threads);
 			std::vector<std::future<void>> futures(num_threads - 1);
-			auto lambda = [&u_copy, &u, &vec_norm_x, &vec_norm_t, h, tau, t, i](std::size_t first, std::size_t last)
+			auto lambda = [&u_copy, &u, &vec_norm_x, &vec_norm_t, h, tau, t](std::size_t first, std::size_t last)
 			{
 				static std::mutex mutex;
+				auto x_index = vec_norm_x.size() - 1;
 				for (int j = first; j < last; ++j)
 				{
 					auto x = j * h;
@@ -56,7 +60,7 @@ int main()
 						tau * (a_ij + tau / 2 * (a_t(x, t, tau) - a_ij * a_x(x, t, h))) * (4 * u_copy[j + 1] - 3 * u_copy[j] - u_copy[j + 2]) / (2 * h) +
 						tau * b(x, t) + tau * tau / 2 * (b_t(x, t, tau) - a_ij * b_x(x, t, h));
 					vec_norm_t[j] += u[j] * u[j];
-					vec_norm_x[i + 1] += u[j] * u[j];
+					vec_norm_x[x_index] += u[j] * u[j];
 				}
 			};
 			auto threads_ratio = static_cast<double>(L - 2) / num_threads;
@@ -74,9 +78,10 @@ int main()
 					(a_t(1, t, tau) - a(1, t) * a_x(1, t, h)) - b_t(1, t, tau) + a(1, t) * b_x(1, t, h));
 			vec_norm_t[L - 2] += u[L - 2] * u[L - 2];
 
-			vec_norm_x[i + 1] += u[L - 1] * u[L - 1] + u[L - 2] * u[L - 2];
+			vec_norm_x[vec_norm_x.size() - 1] += u[L - 1] * u[L - 1] + u[L - 2] * u[L - 2];
 		}
 
+		auto N = vec_norm_x.size();
 		for (int i = 0; i < vec_norm_x.size(); ++i) norm_x += std::sqrt(vec_norm_x[i]);
 		norm_x /= N*L;
 
